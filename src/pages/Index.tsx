@@ -49,21 +49,21 @@ const Index = () => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KPICard
               title="Total Grievances"
-              value="1,050"
+              value="1,033"
               icon={FileText}
               variant="default"
               trend={{ value: 12.4, isPositive: false }}
             />
             <KPICard
               title="Resolved"
-              value="867"
+              value="916"
               icon={CheckCircle}
               variant="success"
               subtitle="82.6% resolution rate"
             />
             <KPICard
               title="Pending"
-              value="183"
+              value="33"
               icon={Clock}
               variant="warning"
               subtitle="17.4% backlog"
@@ -77,7 +77,7 @@ const Index = () => {
             />
             <KPICard
               title="Departments"
-              value="8"
+              value="79"
               icon={Users}
               variant="default"
               subtitle="Active units"
