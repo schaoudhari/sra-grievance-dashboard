@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { KPICard } from "@/components/KPICard";
 import { DashboardFilters } from "@/components/DashboardFilters";
@@ -13,8 +12,32 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
+import { useCombinedGrievanceData, Grievance } from "@/hooks/use-combined-grievance-data";
 
 const Index = () => {
+  const { grievances, loading, error } = useCombinedGrievanceData();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+  const totalGrievances = grievances.length;
+  const resolvedGrievances = grievances.filter(
+    (g) => g.Status === "Closed" || g.Status === "Auto Closed"
+  ).length;
+  const pendingGrievances = totalGrievances - resolvedGrievances;
+  const resolutionRate = ((resolvedGrievances / totalGrievances) * 100).toFixed(1);
+  const backlog = ((pendingGrievances / totalGrievances) * 100).toFixed(1);
+  const avgResolution = (
+    grievances.reduce((acc, g) => acc + g.Pendency, 0) / totalGrievances
+  ).toFixed(1);
+  const departments = [...new Set(grievances.map((g) => g["Office Name"]))].length;
+  const criticalIssues = grievances.filter((g) => g.Pendency > 30).length;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -26,13 +49,13 @@ const Index = () => {
                 SRA Grievance Analytics Dashboard
               </h1>
               <p className="text-muted-foreground mt-1">
-                Performance Analysis — Q3 2025
+                Performance Analysis — Q4 2025
               </p>
             </div>
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Last Updated</div>
               <div className="text-sm font-medium text-foreground">
-                September 30, 2025
+                January 07, 2026
               </div>
             </div>
           </div>
@@ -49,42 +72,42 @@ const Index = () => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <KPICard
               title="Total Grievances"
-              value="1,033"
+              value={totalGrievances}
               icon={FileText}
               variant="default"
               trend={{ value: 12.4, isPositive: false }}
             />
             <KPICard
               title="Resolved"
-              value="916"
+              value={resolvedGrievances}
               icon={CheckCircle}
               variant="success"
-              subtitle="82.6% resolution rate"
+              subtitle={`${resolutionRate}% resolution rate`}
             />
             <KPICard
               title="Pending"
-              value="33"
+              value={pendingGrievances}
               icon={Clock}
               variant="warning"
-              subtitle="17.4% backlog"
+              subtitle={`${backlog}% backlog`}
             />
             <KPICard
               title="Avg Resolution"
-              value="19 days"
+              value={`${avgResolution} days`}
               icon={TrendingUp}
               variant="accent"
-              trend={{ value: 21, isPositive: true }}
+              trend={{ value: 18.5, isPositive: false }}
             />
             <KPICard
               title="Departments"
-              value="79"
+              value={departments}
               icon={Users}
               variant="default"
               subtitle="Active units"
             />
             <KPICard
               title="Critical Issues"
-              value="34"
+              value={criticalIssues}
               icon={AlertCircle}
               variant="warning"
               subtitle="Require attention"
@@ -130,15 +153,15 @@ const Index = () => {
               </TabsList>
 
               <TabsContent value="predictive" className="space-y-6">
-                <PredictiveAnalysis />
+                <PredictiveAnalysis grievances={grievances} />
               </TabsContent>
 
               <TabsContent value="inferential" className="space-y-6">
-                <InferentialAnalysis />
+                <InferentialAnalysis grievances={grievances} />
               </TabsContent>
 
               <TabsContent value="retrospective" className="space-y-6">
-                <RetrospectiveAnalysis />
+                <RetrospectiveAnalysis grievances={grievances} />
               </TabsContent>
             </Tabs>
           </div>
@@ -161,3 +184,8 @@ const Index = () => {
 };
 
 export default Index;
+
+
+
+
+

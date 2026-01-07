@@ -1,87 +1,69 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { TrendingUp, AlertTriangle, Calendar } from "lucide-react";
+import {Grievance} from "@/hooks/use-combined-grievance-data";
+import { useMemo } from "react";
 
-const trendData = [
-  { month: "Oct", actual: 245, predicted: 250 },
-  { month: "Nov", actual: 289, predicted: 285 },
-  { month: "Dec", actual: 312, predicted: 320 },
-  { month: "Jan", actual: null, predicted: 340 },
-  { month: "Feb", actual: null, predicted: 365 },
-  { month: "Mar", actual: null, predicted: 380 },
-];
+const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
-const categoryPrediction = [
-  { category: "Rent & Compensation", current: 128, predicted: 145 },
-  { category: "Allotment & Possession", current: 98, predicted: 110 },
-  { category: "Society Mismanagement", current: 76, predicted: 82 },
-  { category: "Illegal Construction", current: 54, predicted: 68 },
-  { category: "Administrative Delays", current: 43, predicted: 55 },
-];
+interface PredictiveAnalysisProps {
+    grievances: Grievance[];
+}
 
-const seasonalPattern = [
-  { name: "Q1", value: 850 },
-  { name: "Q2", value: 920 },
-  { name: "Q3", value: 1050 },
-  { name: "Q4", value: 980 },
-];
+export const PredictiveAnalysis = ({ grievances }: PredictiveAnalysisProps) => {
 
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
+    const monthlyTrend = useMemo(() => {
+        const trend: { [key: string]: number } = {};
+        grievances.forEach(g => {
+            const date = new Date(g["Filed On"]);
+            const month = date.toLocaleString('default', { month: 'short' });
+            if (trend[month]) {
+                trend[month]++;
+            } else {
+                trend[month] = 1;
+            }
+        });
+        return Object.entries(trend).map(([month, count]) => ({ month, count }));
+    }, [grievances]);
 
-export const PredictiveAnalysis = () => {
+    const categoryPrediction = useMemo(() => {
+        const categories: { [key: string]: number } = {};
+        grievances.forEach(g => {
+            const category = g.NOG;
+            if (categories[category]) {
+                categories[category]++;
+            } else {
+                categories[category] = 1;
+            }
+        });
+        return Object.entries(categories).map(([category, count]) => ({ category, count }));
+    }, [grievances]);
+
+    const statusDistribution = useMemo(() => {
+        const statuses: { [key: string]: number } = {};
+        grievances.forEach(g => {
+            const status = g.Status;
+            if (statuses[status]) {
+                statuses[status]++;
+            } else {
+                statuses[status] = 1;
+            }
+        });
+        return Object.entries(statuses).map(([name, value]) => ({ name, value }));
+    }, [grievances]);
+
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-l-4 border-l-warning">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-warning" />
-              Expected Growth
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">+18%</div>
-            <p className="text-xs text-muted-foreground mt-1">Next Quarter (Q4 2025)</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-destructive">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <AlertTriangle className="h-4 w-4 text-destructive" />
-              High-Risk Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">Rent Issues</div>
-            <p className="text-xs text-muted-foreground mt-1">Predicted surge in March</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-accent">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-accent" />
-              Peak Period
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">Q3</div>
-            <p className="text-xs text-muted-foreground mt-1">Historically highest volume</p>
-          </CardContent>
-        </Card>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle>Grievance Volume Forecast (Next 6 Months)</CardTitle>
+          <CardTitle>Grievance Volume Trend</CardTitle>
           <CardDescription>
-            Based on historical trends and seasonal patterns
+            Grievances filed per month
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={350}>
-            <LineChart data={trendData}>
+            <LineChart data={monthlyTrend}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
               <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -94,20 +76,11 @@ export const PredictiveAnalysis = () => {
               <Legend />
               <Line
                 type="monotone"
-                dataKey="actual"
+                dataKey="count"
                 stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                name="Actual"
+                name="Grievances"
                 dot={{ fill: "hsl(var(--primary))" }}
-              />
-              <Line
-                type="monotone"
-                dataKey="predicted"
-                stroke="hsl(var(--accent))"
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                name="Predicted"
-                dot={{ fill: "hsl(var(--accent))" }}
               />
             </LineChart>
           </ResponsiveContainer>
@@ -117,8 +90,8 @@ export const PredictiveAnalysis = () => {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Category-wise Predictions</CardTitle>
-            <CardDescription>Current vs Predicted (Next Quarter)</CardDescription>
+            <CardTitle>Category Breakdown</CardTitle>
+            <CardDescription>Distribution of grievances by category</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -139,8 +112,7 @@ export const PredictiveAnalysis = () => {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="current" fill="hsl(var(--primary))" name="Current" />
-                <Bar dataKey="predicted" fill="hsl(var(--warning))" name="Predicted" />
+                <Bar dataKey="count" fill="hsl(var(--primary))" name="Count" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -148,14 +120,14 @@ export const PredictiveAnalysis = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Seasonal Pattern Analysis</CardTitle>
-            <CardDescription>Quarterly complaint distribution</CardDescription>
+            <CardTitle>Status Distribution</CardTitle>
+            <CardDescription>Current status of all grievances</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-center">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={seasonalPattern}
+                  data={statusDistribution}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -164,7 +136,7 @@ export const PredictiveAnalysis = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {seasonalPattern.map((entry, index) => (
+                  {statusDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -174,68 +146,6 @@ export const PredictiveAnalysis = () => {
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Key Predictive Insights</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3">
-            <li className="flex items-start gap-3">
-              <div className="h-2 w-2 rounded-full bg-warning mt-2" />
-              <div>
-                <p className="font-medium text-foreground">
-                  18% increase expected in Q4 2025
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Based on 3-year historical trend and current growth rate
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="h-2 w-2 rounded-full bg-destructive mt-2" />
-              <div>
-                <p className="font-medium text-foreground">
-                  Rent & Compensation complaints likely to surge in March
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Seasonal pattern observed for past 2 years coinciding with fiscal year-end
-                </p>
-              </div>
-            </li>
-            <li className="flex items-start gap-3">
-              <div className="h-2 w-2 rounded-full bg-accent mt-2" />
-              <div>
-                <p className="font-medium text-foreground">
-                  Illegal Construction complaints showing upward trend
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  26% predicted increase suggests need for preventive action
-                </p>
-              </div>
-            </li>
-          </ul>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-muted/50">
-        <CardHeader>
-          <CardTitle className="text-base">Strategic Recommendations</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ol className="space-y-2 list-decimal list-inside text-sm text-foreground">
-            <li>
-              Increase staffing in Rent & Compensation department ahead of predicted March surge
-            </li>
-            <li>
-              Implement proactive monitoring system for illegal constructions to reduce complaint volume
-            </li>
-            <li>
-              Prepare additional resources for Q3 period (historically highest volume quarter)
-            </li>
-          </ol>
-        </CardContent>
-      </Card>
     </div>
   );
 };
